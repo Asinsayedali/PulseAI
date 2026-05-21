@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Read|Bash|Grep",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .claude/hooks/block_env_read.py",
+            "statusMessage": "Checking for .env access..."
+          }
+        ]
+      }
+    ]
+  }
+}
