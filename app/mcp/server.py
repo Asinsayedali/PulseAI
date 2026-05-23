@@ -1,4 +1,3 @@
-import json
 from fastmcp import FastMCP
 from app.config import settings
 from app.mcp.client import PulseDeskClient
@@ -59,4 +58,69 @@ def get_ticket(ticket_id: int) -> str:
         f"Summary:             {ticket.get('ai_summary') or 'Pending'}\n"
         f"Category:            {ticket.get('ai_category') or 'Pending'}\n"
         f"Priority suggestion: {ticket.get('ai_priority_suggestion') or 'Pending'}\n"
+    )
+
+
+@mcp.tool()
+def create_ticket(title: str, description: str) -> str:
+    """
+    Create a new support ticket in PulseDesk.
+    The ticket starts with status OPEN and priority MEDIUM.
+    AI analysis (summary, category, priority suggestion) will be populated
+    automatically in the background after creation.
+    """
+    ticket = client.create_ticket(title=title, description=description)
+
+    return (
+        f"Ticket created successfully.\n"
+        f"ID:          #{ticket['id']}\n"
+        f"Title:       {ticket['title']}\n"
+        f"Status:      {ticket['status']}\n"
+        f"Priority:    {ticket['priority']}\n"
+        f"AI analysis is being processed in the background."
+    )
+
+
+@mcp.tool()
+def delete_ticket(ticket_id: int) -> str:
+    """
+    Permanently delete a ticket by its ID.
+    This action cannot be undone.
+    """
+    client.delete_ticket(ticket_id)
+    return f"Ticket #{ticket_id} has been deleted."
+
+
+@mcp.tool()
+def list_ticket_comments(ticket_id: int) -> str:
+    """
+    List all comments on a ticket.
+    Returns each comment with its author user ID and timestamp.
+    """
+    comments = client.list_comments(ticket_id)
+
+    if not comments:
+        return f"No comments on ticket #{ticket_id} yet."
+
+    lines = [f"{len(comments)} comment(s) on ticket #{ticket_id}:\n"]
+    for c in comments:
+        lines.append(
+            f"[#{c['id']}] User {c['user_id']} at {c['created_at']}\n"
+            f"  {c['content']}\n"
+        )
+    return "\n".join(lines)
+
+
+@mcp.tool()
+def add_comment(ticket_id: int, content: str) -> str:
+    """
+    Add a comment to a ticket.
+    The comment is posted as the MCP service account user.
+    """
+    comment = client.add_comment(ticket_id=ticket_id, content=content)
+
+    return (
+        f"Comment added to ticket #{ticket_id}.\n"
+        f"Comment ID: #{comment['id']}\n"
+        f"Content:    {comment['content']}"
     )

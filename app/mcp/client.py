@@ -36,6 +36,8 @@ class PulseDeskClient:
             response = self._http.request(method, path, headers=headers, **kwargs)
 
         response.raise_for_status()
+        if response.status_code == 204 or not response.content:
+            return {}
         return response.json()
 
     def search_tickets(
@@ -53,3 +55,23 @@ class PulseDeskClient:
 
     def get_ticket(self, ticket_id: int) -> dict:
         return self._request("GET", f"/api/v1/tickets/{ticket_id}")
+
+    def create_ticket(self, title: str, description: str) -> dict:
+        return self._request(
+            "POST",
+            "/api/v1/tickets",
+            json={"title": title, "description": description},
+        )
+
+    def delete_ticket(self, ticket_id: int) -> None:
+        self._request("DELETE", f"/api/v1/tickets/{ticket_id}")
+
+    def add_comment(self, ticket_id: int, content: str) -> dict:
+        return self._request(
+            "POST",
+            f"/api/v1/tickets/{ticket_id}/comments",
+            json={"content": content},
+        )
+
+    def list_comments(self, ticket_id: int) -> list:
+        return self._request("GET", f"/api/v1/tickets/{ticket_id}/comments")
